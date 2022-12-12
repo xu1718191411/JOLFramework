@@ -55,6 +55,17 @@ func (c *JolContext) setIsTimeout(v bool) {
 	c.isTimeout = v
 }
 
+func (c *JolContext) Send(text string) {
+	if c.isTimeout {
+		return
+	}
+
+	c.writer.WriteHeader(http.StatusOK)
+	c.writer.Header().Set("Content-Type", "text/plain")
+	c.writer.Write([]byte(text))
+	return
+}
+
 func (c *JolContext) Json(data any) {
 	if c.isTimeout {
 		return
