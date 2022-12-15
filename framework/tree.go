@@ -51,7 +51,12 @@ type Tree struct {
 }
 
 func (t *Tree) Find(url string) func(ctx *JolContext) {
-	result := t.Node.Find(strings.Split(url, "/")[1:])
+	arr := strings.Split(url, "/")
+	// slash does not exists in the url
+	if len(arr) == 1 {
+		return nil
+	}
+	result := t.Node.Find(arr[1:])
 	if result == nil {
 		return nil
 	}

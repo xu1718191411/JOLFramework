@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 )
@@ -23,9 +24,15 @@ func TestTreeT(t *testing.T) {
 	tree.Add("/users/:id", func(ctx *JolContext) {
 		ctx.Json("get users id")
 	})
+	tree.Add("/", func(ctx *JolContext) {
+		ctx.Json("get root")
+	})
 
-	res := tree.Find("/api/v3/messages")
+	res := tree.Find("/api/v1/ttt")
 
+	if res == nil {
+		return
+	}
 	mockResponseWriter := &MockResponseWriter{}
 	ctx := NewContext(mockResponseWriter, &http.Request{})
 	res(ctx)
@@ -39,7 +46,8 @@ func (m *MockResponseWriter) Header() http.Header {
 	return header
 }
 
-func (m *MockResponseWriter) Write([]byte) (int, error) {
+func (m *MockResponseWriter) Write(data []byte) (int, error) {
+	fmt.Println(string(data))
 	return 0, nil
 }
 
