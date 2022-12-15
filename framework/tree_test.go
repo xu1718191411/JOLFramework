@@ -21,14 +21,20 @@ func TestTreeT(t *testing.T) {
 	tree.Add("/api/v1/tickets", func(ctx *JolContext) {
 		ctx.Json("get v1 tickets")
 	})
-	tree.Add("/users/:id", func(ctx *JolContext) {
+
+	tree.Add("/users/:id/tickets", func(ctx *JolContext) {
 		ctx.Json("get users id")
 	})
+
+	tree.Add("/users/tickets", func(ctx *JolContext) {
+		ctx.Json("get users tickets")
+	})
+
 	tree.Add("/", func(ctx *JolContext) {
 		ctx.Json("get root")
 	})
 
-	res := tree.Find("/api/v1/ttt")
+	res := tree.Find("/users/1/tickets")
 
 	if res == nil {
 		return

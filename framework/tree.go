@@ -17,13 +17,26 @@ func (n *Node) ExistedInChildren(param string) *Node {
 		return nil
 	}
 
+	// find normal param is match param or not
 	for _, child := range children {
 		if child.param == param {
 			return child
 		}
 	}
 
+	// if no noraml param is found, try to find a generic child
+	for _, child := range children {
+		if isGeneric(child.param) {
+			return child
+		}
+	}
+
 	return nil
+}
+
+// is param contains :
+func isGeneric(param string) bool {
+	return strings.Contains(param, ":")
 }
 
 func (n *Node) Find(urls []string) *Node {
