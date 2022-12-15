@@ -1,10 +1,13 @@
 package framework
 
-import "strings"
+import (
+	"strings"
+)
 
 type Node struct {
 	param    string
 	children []*Node
+	handler  func(ctx *JolContext)
 }
 
 func (n *Node) ExistedInChildren(param string) *Node {
@@ -23,11 +26,39 @@ func (n *Node) ExistedInChildren(param string) *Node {
 	return nil
 }
 
+func (n *Node) Find(urls []string) *Node {
+	existedNode := n.ExistedInChildren(urls[0])
+	if existedNode == nil {
+		return nil
+	}
+
+	// if it is the last param, judge return value
+	if len(urls) == 1 {
+		// if handler on this node does not exists, do not reutn the node
+		if existedNode.handler == nil {
+			return nil
+		}
+
+		// if handler on this node exists, return the node
+		return existedNode
+	}
+
+	return existedNode.Find(urls[1:])
+}
+
 type Tree struct {
 	Node *Node
 }
 
-func (t *Tree) Add(url string) *Tree {
+func (t *Tree) Find(url string) func(ctx *JolContext) {
+	result := t.Node.Find(strings.Split(url, "/")[1:])
+	if result == nil {
+		return nil
+	}
+	return result.handler
+}
+
+func (t *Tree) Add(url string, handler func(ctx *JolContext)) *Tree {
 
 	if t.Node == nil {
 		t.Node = &Node{
@@ -53,6 +84,11 @@ func (t *Tree) Add(url string) *Tree {
 			// add into child
 			newChild := &Node{
 				param: param,
+			}
+
+			// if it is the last node, append handler to the node
+			if index == len(params)-1 {
+				newChild.handler = handler
 			}
 
 			// if children is nil, create a new slice holding new generated child
