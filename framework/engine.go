@@ -5,10 +5,57 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type Engine struct {
+	Handler *Handler
+}
+
+type Handler struct {
+	handlers map[string]*Tree
+}
+
+func NewHandler() *Handler {
+	handlers := make(map[string]*Tree, 0)
+	return &Handler{
+		handlers: handlers,
+	}
+}
+
+func (h *Handler) GET(url string, handler func(ctx *JolContext)) {
+	h.addHandler("GET", url, handler)
+}
+
+func (h *Handler) POST(url string, handler func(ctx *JolContext)) {
+	h.addHandler("POST", url, handler)
+}
+
+func (h *Handler) PUT(url string, handler func(ctx *JolContext)) {
+	h.addHandler("PUT", url, handler)
+}
+
+func (h *Handler) PATCH(url string, handler func(ctx *JolContext)) {
+	h.addHandler("PATH", url, handler)
+}
+
+func (h *Handler) addHandler(method string, url string, handler func(ctx *JolContext)) {
+	tree := h.handlers[method]
+	if tree == nil {
+		tree = &Tree{}
+		h.handlers[method] = tree
+	}
+	h.handlers[method].Add(url, handler)
+}
+
+func (h *Handler) HEAD(url string, handler func(ctx *JolContext)) {
+	tree := h.handlers["HEAD"]
+	if tree == nil {
+		tree = &Tree{}
+		h.handlers["HEAD"] = tree
+	}
+	h.handlers["HEAD"].Add(url, handler)
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -22,6 +69,9 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer cancel()
 
+	s := e.Handler.handlers[strings.ToUpper(r.Method)]
+	targetHandler := s.Find(r.RequestURI)
+
 	go func() {
 		defer func() {
 			if p := recover(); p != nil {
@@ -29,8 +79,7 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 		time.Sleep(time.Second)
-		ControllerWithContext(jolContext)
-		//ControllerWithOutContext(w, r)
+		targetHandler(jolContext)
 		successCh <- 1
 	}()
 
