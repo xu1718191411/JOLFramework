@@ -8,22 +8,24 @@ import (
 )
 
 func main() {
-	handler := framework.NewHandler()
+	router := framework.NewHandler()
 
-	handler.GET("/api/v1/users", func(ctx *framework.JolContext) {
-		ctx.Json("users")
-	})
-
-	handler.GET("/", func(ctx *framework.JolContext) {
+	router.GET("/", func(ctx *framework.JolContext) {
 		ctx.Json("hello")
 	})
 
-	handler.GET("/api/v1/users/:id", func(ctx *framework.JolContext) {
-		ctx.Json("user detail page")
+	group := router.Group("/api/v1")
+
+	group.GET("/users", func(ctx *framework.JolContext) {
+		ctx.Json("users")
+	})
+
+	group.GET("/tickets", func(ctx *framework.JolContext) {
+		ctx.Json("tickets")
 	})
 
 	engine := framework.Engine{
-		Handler: handler,
+		Router: router,
 	}
 	port := 8080
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), &engine))
