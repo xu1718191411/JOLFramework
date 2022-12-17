@@ -12,22 +12,22 @@ func NewGroup(router *Router, prefix string) *Group {
 	}
 }
 
-func (g *Group) GET(url string, h func(ctx *JolContext)) {
+func (g *Group) Get(url string, h func(ctx *JolContext)) {
 	g.handlers["GET"].Add(g.prefix+url, h)
 }
 
-func (g *Group) POST(url string, h func(ctx *JolContext)) {
+func (g *Group) Post(url string, h func(ctx *JolContext)) {
 	g.handlers["POST"].Add(g.prefix+url, h)
 }
 
-func (g *Group) PUT(url string, h func(ctx *JolContext)) {
+func (g *Group) Put(url string, h func(ctx *JolContext)) {
 	g.handlers["PUT"].Add(g.prefix+url, h)
 }
 
-func (g *Group) HEAD(url string, h func(ctx *JolContext)) {
+func (g *Group) Head(url string, h func(ctx *JolContext)) {
 	g.handlers["HEAD"].Add(g.prefix+url, h)
 }
 
-func (g *Group) DELETE(url string, h func(ctx *JolContext)) {
+func (g *Group) Delete(url string, h func(ctx *JolContext)) {
 	g.handlers["DELETE"].Add(g.prefix+url, h)
 }
