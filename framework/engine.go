@@ -69,15 +69,6 @@ func (h *Router) addHandler(method string, url string, handler func(ctx *JolCont
 	h.handlers[method].Add(url, handler)
 }
 
-func (h *Router) HEAD(url string, handler func(ctx *JolContext)) {
-	tree := h.handlers["HEAD"]
-	if tree == nil {
-		tree = &Tree{}
-		h.handlers["HEAD"] = tree
-	}
-	h.handlers["HEAD"].Add(url, handler)
-}
-
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	panicCh := make(chan any)
