@@ -2,7 +2,6 @@ package framework
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,37 +9,47 @@ import (
 )
 
 type Engine struct {
-	Handler *Handler
+	Router *Router
 }
 
-type Handler struct {
+type Router struct {
 	handlers map[string]*Tree
 }
 
-func NewHandler() *Handler {
+func (r *Router) GetHandlers() map[string]*Tree {
+	return r.handlers
+}
+
+func NewHandler() *Router {
 	handlers := make(map[string]*Tree, 0)
-	return &Handler{
+	handlers["GET"] = &Tree{}
+	handlers["POST"] = &Tree{}
+	handlers["PUT"] = &Tree{}
+	handlers["PATCH"] = &Tree{}
+	handlers["DELETE"] = &Tree{}
+	handlers["HEAD"] = &Tree{}
+	return &Router{
 		handlers: handlers,
 	}
 }
 
-func (h *Handler) GET(url string, handler func(ctx *JolContext)) {
+func (h *Router) GET(url string, handler func(ctx *JolContext)) {
 	h.addHandler("GET", url, handler)
 }
 
-func (h *Handler) POST(url string, handler func(ctx *JolContext)) {
+func (h *Router) POST(url string, handler func(ctx *JolContext)) {
 	h.addHandler("POST", url, handler)
 }
 
-func (h *Handler) PUT(url string, handler func(ctx *JolContext)) {
+func (h *Router) PUT(url string, handler func(ctx *JolContext)) {
 	h.addHandler("PUT", url, handler)
 }
 
-func (h *Handler) PATCH(url string, handler func(ctx *JolContext)) {
+func (h *Router) PATCH(url string, handler func(ctx *JolContext)) {
 	h.addHandler("PATH", url, handler)
 }
 
-func (h *Handler) addHandler(method string, url string, handler func(ctx *JolContext)) {
+func (h *Router) addHandler(method string, url string, handler func(ctx *JolContext)) {
 	tree := h.handlers[method]
 	if tree == nil {
 		tree = &Tree{}
@@ -49,7 +58,7 @@ func (h *Handler) addHandler(method string, url string, handler func(ctx *JolCon
 	h.handlers[method].Add(url, handler)
 }
 
-func (h *Handler) HEAD(url string, handler func(ctx *JolContext)) {
+func (h *Router) HEAD(url string, handler func(ctx *JolContext)) {
 	tree := h.handlers["HEAD"]
 	if tree == nil {
 		tree = &Tree{}
@@ -69,7 +78,7 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer cancel()
 
-	s := e.Handler.handlers[strings.ToUpper(r.Method)]
+	s := e.Router.handlers[strings.ToUpper(r.Method)]
 	targetHandler := s.Find(r.RequestURI)
 
 	go func() {
@@ -97,34 +106,4 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("success")
 	}
 
-}
-
-func ControllerWithContext(ctx *JolContext) {
-	output := struct {
-		Msg string `json:"msg"`
-	}{
-		Msg: "ok",
-	}
-
-	ctx.Json(output)
-}
-
-func ControllerWithOutContext(w http.ResponseWriter, r *http.Request) {
-	output := struct {
-		Msg string `json:"msg"`
-	}{
-		Msg: "ok",
-	}
-
-	data, err := json.Marshal(output)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
-	return
 }
