@@ -5,10 +5,10 @@ type Group struct {
 	handlers map[string]*Tree
 }
 
-func (r *Router) Group(prefix string) *Group {
+func NewGroup(router *Router, prefix string) *Group {
 	return &Group{
 		prefix:   prefix,
-		handlers: r.GetHandlers(),
+		handlers: router.handlers,
 	}
 }
 
