@@ -13,6 +13,8 @@ type JolContext struct {
 	request   *http.Request
 	mutax     sync.Mutex
 	isTimeout bool
+	index     int
+	Handlers  []func(ctx *JolContext)
 }
 
 func NewContext(writer http.ResponseWriter, request *http.Request) *JolContext {
@@ -80,4 +82,13 @@ func (c *JolContext) Json(data any) {
 	c.writer.WriteHeader(http.StatusOK)
 	c.writer.Write(byteData)
 	return
+}
+
+func (c *JolContext) Next() {
+
+	for c.index < len(c.Handlers) {
+		handler := c.Handlers[c.index]
+		c.index += 1
+		handler(c)
+	}
 }
