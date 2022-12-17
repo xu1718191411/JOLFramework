@@ -33,19 +33,19 @@ func NewHandler() *Router {
 	}
 }
 
-func (h *Router) GET(url string, handler func(ctx *JolContext)) {
+func (h *Router) Get(url string, handler func(ctx *JolContext)) {
 	h.addHandler("GET", url, handler)
 }
 
-func (h *Router) POST(url string, handler func(ctx *JolContext)) {
+func (h *Router) Post(url string, handler func(ctx *JolContext)) {
 	h.addHandler("POST", url, handler)
 }
 
-func (h *Router) PUT(url string, handler func(ctx *JolContext)) {
+func (h *Router) Put(url string, handler func(ctx *JolContext)) {
 	h.addHandler("PUT", url, handler)
 }
 
-func (h *Router) PATCH(url string, handler func(ctx *JolContext)) {
+func (h *Router) Patch(url string, handler func(ctx *JolContext)) {
 	h.addHandler("PATH", url, handler)
 }
 
