@@ -5,9 +5,10 @@ import (
 )
 
 type Node struct {
-	param    string
-	children []*Node
-	handler  func(ctx *JolContext)
+	param       string
+	children    []*Node
+	handler     func(ctx *JolContext)
+	middlewares []func(ctx *JolContext)
 }
 
 func (n *Node) ExistedInChildren(param string) *Node {
@@ -63,20 +64,17 @@ type Tree struct {
 	Node *Node
 }
 
-func (t *Tree) Find(url string) func(ctx *JolContext) {
+func (t *Tree) Find(url string) *Node {
 	arr := strings.Split(url, "/")
 	// slash does not exists in the url
 	if len(arr) == 1 {
 		return nil
 	}
 	result := t.Node.Find(arr[1:])
-	if result == nil {
-		return nil
-	}
-	return result.handler
+	return result
 }
 
-func (t *Tree) Add(url string, handler func(ctx *JolContext)) *Tree {
+func (t *Tree) Add(url string, handler func(ctx *JolContext), middlewares []func(ctx *JolContext)) *Tree {
 
 	if t.Node == nil {
 		t.Node = &Node{
@@ -101,7 +99,8 @@ func (t *Tree) Add(url string, handler func(ctx *JolContext)) *Tree {
 		if findInChildren == nil {
 			// add into child
 			newChild := &Node{
-				param: param,
+				param:       param,
+				middlewares: middlewares,
 			}
 
 			// if it is the last node, append handler to the node

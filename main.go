@@ -15,11 +15,16 @@ func main() {
 	})
 
 	router.Use("log", func(ctx *framework.JolContext) {
-		fmt.Println(ctx.BaseContext())
+		fmt.Println("middleware log")
 		ctx.Next()
 	})
 
 	group := framework.NewGroup(router, "/api/v1")
+
+	group.Use("log", func(ctx *framework.JolContext) {
+		fmt.Println("Group middleware")
+		ctx.Next()
+	})
 
 	group.Get("/users", func(ctx *framework.JolContext) {
 		ctx.Json("users")

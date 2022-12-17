@@ -66,16 +66,7 @@ func (h *Router) addHandler(method string, url string, handler func(ctx *JolCont
 		tree = &Tree{}
 		h.handlers[method] = tree
 	}
-	h.handlers[method].Add(url, handler)
-}
-
-func (h *Router) HEAD(url string, handler func(ctx *JolContext)) {
-	tree := h.handlers["HEAD"]
-	if tree == nil {
-		tree = &Tree{}
-		h.handlers["HEAD"] = tree
-	}
-	h.handlers["HEAD"].Add(url, handler)
+	h.handlers[method].Add(url, handler, nil)
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -90,10 +81,16 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	s := e.Router.handlers[strings.ToUpper(r.Method)]
-	targetHandler := s.Find(r.RequestURI)
-	middlerwares := e.Router.middlewares
+	targetNode := s.Find(r.RequestURI)
 
-	handlers := append(middlerwares, targetHandler)
+	if targetNode == nil {
+		jolContext.Status(http.StatusNotFound)
+		return
+	}
+
+	middlerwares := e.Router.middlewares
+	handlers := append(middlerwares, targetNode.middlewares...)
+	handlers = append(handlers, targetNode.handler)
 	jolContext.Handlers = handlers
 
 	go func() {

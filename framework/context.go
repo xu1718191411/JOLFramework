@@ -84,6 +84,10 @@ func (c *JolContext) Json(data any) {
 	return
 }
 
+func (c *JolContext) Status(code int) {
+	c.writer.WriteHeader(code)
+}
+
 func (c *JolContext) Next() {
 
 	for c.index < len(c.Handlers) {
