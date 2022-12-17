@@ -2,22 +2,31 @@ package main
 
 import (
 	"JOLFramework/framework"
+	"JOLFramework/framework/middlewares"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
+
+func panic(ctx *framework.JolContext) {
+	ctx.Json("panic")
+}
+
+func timeout(ctx *framework.JolContext) {
+	ctx.Json("timeout handler")
+}
 
 func main() {
 	router := framework.NewHandler()
 
-	router.Get("/", func(ctx *framework.JolContext) {
-		ctx.Json("hello")
-	})
+	// router.Get("/", func(ctx *framework.JolContext) {
+	// 	ctx.Json("hello")
+	// })
 
-	router.Use("log", func(ctx *framework.JolContext) {
-		fmt.Println("middleware log")
-		ctx.Next()
-	})
+	router.Use("recovery", middlewares.Recovery)
+	router.Use("log", middlewares.Logger)
+	router.Use("timeout", middlewares.Timeout(time.Second*500))
 
 	group := framework.NewGroup(router, "/api/v1")
 
@@ -26,9 +35,12 @@ func main() {
 		ctx.Next()
 	})
 
-	group.Get("/users", func(ctx *framework.JolContext) {
-		ctx.Json("users")
-	})
+	// group.Get("/users", func(ctx *framework.JolContext) {
+	// 	ctx.Json("users")
+	// })
+
+	router.Get("/panic", panic)
+	router.Get("/timeout", timeout)
 
 	group.Get("/tickets", func(ctx *framework.JolContext) {
 		ctx.Json("tickets")

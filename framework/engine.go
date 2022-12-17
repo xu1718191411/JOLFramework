@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -71,14 +70,9 @@ func (h *Router) addHandler(method string, url string, handlers []func(ctx *JolC
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	panicCh := make(chan any)
 	successCh := make(chan any)
 
 	jolContext := NewContext(w, r)
-
-	ctx, cancel := context.WithTimeout(jolContext, time.Second*5)
-
-	defer cancel()
 
 	s := e.Router.handlers[strings.ToUpper(r.Method)]
 	targetNode := s.Find(r.RequestURI)
@@ -88,31 +82,16 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	middlerwares := e.Router.middlewares
-	handlers := append(middlerwares, targetNode.handlers...)
+	handlers := targetNode.handlers
 	jolContext.Handlers = handlers
 
 	go func() {
-		defer func() {
-			if p := recover(); p != nil {
-				panicCh <- p
-			}
-		}()
 		time.Sleep(time.Second)
 		jolContext.Next()
 		successCh <- 1
 	}()
 
 	select {
-	case <-ctx.Done():
-		jolContext.Lock()
-		defer jolContext.UnLock()
-		jolContext.Send("timeout")
-		jolContext.setIsTimeout(true)
-	case <-panicCh:
-		jolContext.Lock()
-		defer jolContext.UnLock()
-		jolContext.Send("internal error")
 	case <-successCh:
 		fmt.Println("success")
 	}
