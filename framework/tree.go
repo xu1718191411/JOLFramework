@@ -5,10 +5,9 @@ import (
 )
 
 type Node struct {
-	param       string
-	children    []*Node
-	handler     func(ctx *JolContext)
-	middlewares []func(ctx *JolContext)
+	param    string
+	children []*Node
+	handlers []func(ctx *JolContext)
 }
 
 func (n *Node) ExistedInChildren(param string) *Node {
@@ -48,12 +47,6 @@ func (n *Node) Find(urls []string) *Node {
 
 	// if it is the last param, judge return value
 	if len(urls) == 1 {
-		// if handler on this node does not exists, do not reutn the node
-		if existedNode.handler == nil {
-			return nil
-		}
-
-		// if handler on this node exists, return the node
 		return existedNode
 	}
 
@@ -74,7 +67,7 @@ func (t *Tree) Find(url string) *Node {
 	return result
 }
 
-func (t *Tree) Add(url string, handler func(ctx *JolContext), middlewares []func(ctx *JolContext)) *Tree {
+func (t *Tree) Add(url string, handlers []func(ctx *JolContext)) *Tree {
 
 	if t.Node == nil {
 		t.Node = &Node{
@@ -99,13 +92,12 @@ func (t *Tree) Add(url string, handler func(ctx *JolContext), middlewares []func
 		if findInChildren == nil {
 			// add into child
 			newChild := &Node{
-				param:       param,
-				middlewares: middlewares,
+				param: param,
 			}
 
 			// if it is the last node, append handler to the node
 			if index == len(params)-1 {
-				newChild.handler = handler
+				newChild.handlers = handlers
 			}
 
 			// if children is nil, create a new slice holding new generated child

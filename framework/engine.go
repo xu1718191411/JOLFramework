@@ -35,19 +35,19 @@ func NewHandler() *Router {
 }
 
 func (h *Router) Get(url string, handler func(ctx *JolContext)) {
-	h.addHandler("GET", url, handler)
+	h.addHandler("GET", url, append(h.middlewares, handler))
 }
 
 func (h *Router) Post(url string, handler func(ctx *JolContext)) {
-	h.addHandler("POST", url, handler)
+	h.addHandler("POST", url, append(h.middlewares, handler))
 }
 
 func (h *Router) Put(url string, handler func(ctx *JolContext)) {
-	h.addHandler("PUT", url, handler)
+	h.addHandler("PUT", url, append(h.middlewares, handler))
 }
 
 func (h *Router) Patch(url string, handler func(ctx *JolContext)) {
-	h.addHandler("PATH", url, handler)
+	h.addHandler("PATH", url, append(h.middlewares, handler))
 }
 
 func (h *Router) Use(name string, handler func(ctx *JolContext)) {
@@ -60,13 +60,13 @@ func (h *Router) Use(name string, handler func(ctx *JolContext)) {
 	h.middlewares = append(h.middlewares, handler)
 }
 
-func (h *Router) addHandler(method string, url string, handler func(ctx *JolContext)) {
+func (h *Router) addHandler(method string, url string, handlers []func(ctx *JolContext)) {
 	tree := h.handlers[method]
 	if tree == nil {
 		tree = &Tree{}
 		h.handlers[method] = tree
 	}
-	h.handlers[method].Add(url, handler, nil)
+	h.handlers[method].Add(url, handlers)
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -89,8 +89,7 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	middlerwares := e.Router.middlewares
-	handlers := append(middlerwares, targetNode.middlewares...)
-	handlers = append(handlers, targetNode.handler)
+	handlers := append(middlerwares, targetNode.handlers...)
 	jolContext.Handlers = handlers
 
 	go func() {
