@@ -14,7 +14,7 @@ func main() {
 		ctx.Json("hello")
 	})
 
-	group := router.Group("/api/v1")
+	group := framework.NewGroup(router, "/api/v1")
 
 	group.GET("/users", func(ctx *framework.JolContext) {
 		ctx.Json("users")
