@@ -13,7 +13,8 @@ type Engine struct {
 }
 
 type Router struct {
-	handlers map[string]*Tree
+	handlers    map[string]*Tree
+	middlewares []func(ctx *JolContext)
 }
 
 func (r *Router) GetHandlers() map[string]*Tree {
@@ -49,6 +50,16 @@ func (h *Router) Patch(url string, handler func(ctx *JolContext)) {
 	h.addHandler("PATH", url, handler)
 }
 
+func (h *Router) Use(name string, handler func(ctx *JolContext)) {
+	if h.middlewares == nil {
+		{
+			h.middlewares = []func(ctx *JolContext){}
+		}
+	}
+
+	h.middlewares = append(h.middlewares, handler)
+}
+
 func (h *Router) addHandler(method string, url string, handler func(ctx *JolContext)) {
 	tree := h.handlers[method]
 	if tree == nil {
@@ -56,15 +67,6 @@ func (h *Router) addHandler(method string, url string, handler func(ctx *JolCont
 		h.handlers[method] = tree
 	}
 	h.handlers[method].Add(url, handler)
-}
-
-func (h *Router) HEAD(url string, handler func(ctx *JolContext)) {
-	tree := h.handlers["HEAD"]
-	if tree == nil {
-		tree = &Tree{}
-		h.handlers["HEAD"] = tree
-	}
-	h.handlers["HEAD"].Add(url, handler)
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +82,10 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	s := e.Router.handlers[strings.ToUpper(r.Method)]
 	targetHandler := s.Find(r.RequestURI)
+	middlerwares := e.Router.middlewares
+
+	handlers := append(middlerwares, targetHandler)
+	jolContext.Handlers = handlers
 
 	go func() {
 		defer func() {
@@ -88,7 +94,7 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 		time.Sleep(time.Second)
-		targetHandler(jolContext)
+		jolContext.Next()
 		successCh <- 1
 	}()
 
