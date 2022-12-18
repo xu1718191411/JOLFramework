@@ -2,9 +2,11 @@ package main
 
 import (
 	"JOLFramework/framework"
+	"JOLFramework/framework/middlewares"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -14,15 +16,27 @@ func main() {
 		ctx.Json("hello")
 	})
 
-	router.Use("log", func(ctx *framework.JolContext) {
-		fmt.Println(ctx.BaseContext())
-		ctx.Next()
-	})
+	router.Use("recovery", middlewares.Recovery)
+	router.Use("log", middlewares.Logger)
+	router.Use("timeout", middlewares.Timeout(time.Second))
 
 	group := framework.NewGroup(router, "/api/v1")
 
-	group.Get("/users", func(ctx *framework.JolContext) {
+	group.Use("log", func(ctx *framework.JolContext) {
+		fmt.Println("Group middleware")
+		ctx.Next()
+	})
+
+	router.Get("/users", func(ctx *framework.JolContext) {
 		ctx.Json("users")
+	})
+
+	router.Get("/panic", func(ctx *framework.JolContext) {
+		ctx.Json("panic")
+	})
+	router.Get("/timeout", func(ctx *framework.JolContext) {
+		time.Sleep(time.Second * 3)
+		ctx.Json("timeout handler")
 	})
 
 	group.Get("/tickets", func(ctx *framework.JolContext) {

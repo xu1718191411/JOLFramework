@@ -7,7 +7,7 @@ import (
 type Node struct {
 	param    string
 	children []*Node
-	handler  func(ctx *JolContext)
+	handlers []func(ctx *JolContext)
 }
 
 func (n *Node) ExistedInChildren(param string) *Node {
@@ -47,12 +47,6 @@ func (n *Node) Find(urls []string) *Node {
 
 	// if it is the last param, judge return value
 	if len(urls) == 1 {
-		// if handler on this node does not exists, do not reutn the node
-		if existedNode.handler == nil {
-			return nil
-		}
-
-		// if handler on this node exists, return the node
 		return existedNode
 	}
 
@@ -63,20 +57,17 @@ type Tree struct {
 	Node *Node
 }
 
-func (t *Tree) Find(url string) func(ctx *JolContext) {
+func (t *Tree) Find(url string) *Node {
 	arr := strings.Split(url, "/")
 	// slash does not exists in the url
 	if len(arr) == 1 {
 		return nil
 	}
 	result := t.Node.Find(arr[1:])
-	if result == nil {
-		return nil
-	}
-	return result.handler
+	return result
 }
 
-func (t *Tree) Add(url string, handler func(ctx *JolContext)) *Tree {
+func (t *Tree) Add(url string, handlers []func(ctx *JolContext)) *Tree {
 
 	if t.Node == nil {
 		t.Node = &Node{
@@ -106,7 +97,7 @@ func (t *Tree) Add(url string, handler func(ctx *JolContext)) *Tree {
 
 			// if it is the last node, append handler to the node
 			if index == len(params)-1 {
-				newChild.handler = handler
+				newChild.handlers = handlers
 			}
 
 			// if children is nil, create a new slice holding new generated child

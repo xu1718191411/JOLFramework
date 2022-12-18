@@ -53,7 +53,7 @@ func (c *JolContext) UnLock() {
 	c.mutax.Unlock()
 }
 
-func (c *JolContext) setIsTimeout(v bool) {
+func (c *JolContext) SetIsTimeout(v bool) {
 	c.isTimeout = v
 }
 
@@ -65,7 +65,6 @@ func (c *JolContext) Send(text string) {
 	c.writer.WriteHeader(http.StatusOK)
 	c.writer.Header().Set("Content-Type", "text/plain")
 	c.writer.Write([]byte(text))
-	return
 }
 
 func (c *JolContext) Json(data any) {
@@ -81,7 +80,13 @@ func (c *JolContext) Json(data any) {
 	c.writer.Header().Set("Content-Type", "application/json")
 	c.writer.WriteHeader(http.StatusOK)
 	c.writer.Write(byteData)
-	return
+}
+
+func (c *JolContext) Status(code int) {
+	if c.isTimeout {
+		return
+	}
+	c.writer.WriteHeader(code)
 }
 
 func (c *JolContext) Next() {

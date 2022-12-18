@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -35,19 +34,25 @@ func NewHandler() *Router {
 }
 
 func (h *Router) Get(url string, handler func(ctx *JolContext)) {
-	h.addHandler("GET", url, handler)
+	h.addHandler("GET", url, combineMiddlewareAndHandler(h.middlewares, handler))
 }
 
 func (h *Router) Post(url string, handler func(ctx *JolContext)) {
-	h.addHandler("POST", url, handler)
+	h.addHandler("POST", url, combineMiddlewareAndHandler(h.middlewares, handler))
 }
 
 func (h *Router) Put(url string, handler func(ctx *JolContext)) {
-	h.addHandler("PUT", url, handler)
+	h.addHandler("PUT", url, combineMiddlewareAndHandler(h.middlewares, handler))
 }
 
 func (h *Router) Patch(url string, handler func(ctx *JolContext)) {
-	h.addHandler("PATH", url, handler)
+	h.addHandler("PATH", url, combineMiddlewareAndHandler(h.middlewares, handler))
+}
+
+func combineMiddlewareAndHandler(middlewares []func(ctx *JolContext), handler func(ctx *JolContext)) []func(ctx *JolContext) {
+	arr := make([]func(ctx *JolContext), len(middlewares))
+	copy(arr, middlewares)
+	return append(arr, handler)
 }
 
 func (h *Router) Use(name string, handler func(ctx *JolContext)) {
@@ -60,54 +65,39 @@ func (h *Router) Use(name string, handler func(ctx *JolContext)) {
 	h.middlewares = append(h.middlewares, handler)
 }
 
-func (h *Router) addHandler(method string, url string, handler func(ctx *JolContext)) {
+func (h *Router) addHandler(method string, url string, handlers []func(ctx *JolContext)) {
 	tree := h.handlers[method]
 	if tree == nil {
 		tree = &Tree{}
 		h.handlers[method] = tree
 	}
-	h.handlers[method].Add(url, handler)
+	h.handlers[method].Add(url, handlers)
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	panicCh := make(chan any)
 	successCh := make(chan any)
 
 	jolContext := NewContext(w, r)
 
-	ctx, cancel := context.WithTimeout(jolContext, time.Second*5)
-
-	defer cancel()
-
 	s := e.Router.handlers[strings.ToUpper(r.Method)]
-	targetHandler := s.Find(r.RequestURI)
-	middlerwares := e.Router.middlewares
+	targetNode := s.Find(r.RequestURI)
 
-	handlers := append(middlerwares, targetHandler)
+	if targetNode == nil {
+		jolContext.Status(http.StatusNotFound)
+		return
+	}
+
+	handlers := targetNode.handlers
 	jolContext.Handlers = handlers
 
 	go func() {
-		defer func() {
-			if p := recover(); p != nil {
-				panicCh <- p
-			}
-		}()
 		time.Sleep(time.Second)
 		jolContext.Next()
 		successCh <- 1
 	}()
 
 	select {
-	case <-ctx.Done():
-		jolContext.Lock()
-		defer jolContext.UnLock()
-		jolContext.Send("timeout")
-		jolContext.setIsTimeout(true)
-	case <-panicCh:
-		jolContext.Lock()
-		defer jolContext.UnLock()
-		jolContext.Send("internal error")
 	case <-successCh:
 		fmt.Println("success")
 	}
