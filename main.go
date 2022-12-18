@@ -9,24 +9,16 @@ import (
 	"time"
 )
 
-func panic(ctx *framework.JolContext) {
-	ctx.Json("panic")
-}
-
-func timeout(ctx *framework.JolContext) {
-	ctx.Json("timeout handler")
-}
-
 func main() {
 	router := framework.NewHandler()
 
-	// router.Get("/", func(ctx *framework.JolContext) {
-	// 	ctx.Json("hello")
-	// })
+	router.Get("/", func(ctx *framework.JolContext) {
+		ctx.Json("hello")
+	})
 
 	router.Use("recovery", middlewares.Recovery)
 	router.Use("log", middlewares.Logger)
-	router.Use("timeout", middlewares.Timeout(time.Second*500))
+	router.Use("timeout", middlewares.Timeout(time.Second))
 
 	group := framework.NewGroup(router, "/api/v1")
 
@@ -35,12 +27,17 @@ func main() {
 		ctx.Next()
 	})
 
-	// group.Get("/users", func(ctx *framework.JolContext) {
-	// 	ctx.Json("users")
-	// })
+	router.Get("/users", func(ctx *framework.JolContext) {
+		ctx.Json("users")
+	})
 
-	router.Get("/panic", panic)
-	router.Get("/timeout", timeout)
+	router.Get("/panic", func(ctx *framework.JolContext) {
+		ctx.Json("panic")
+	})
+	router.Get("/timeout", func(ctx *framework.JolContext) {
+		time.Sleep(time.Second * 3)
+		ctx.Json("timeout handler")
+	})
 
 	group.Get("/tickets", func(ctx *framework.JolContext) {
 		ctx.Json("tickets")

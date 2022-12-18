@@ -24,6 +24,7 @@ func Timeout(duration time.Duration) func(ctx *framework.JolContext) {
 			ctx.Lock()
 			defer ctx.UnLock()
 			ctx.Json("timeout...")
+			ctx.SetIsTimeout(true)
 		case <-successCh:
 			return
 		}

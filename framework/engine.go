@@ -34,19 +34,25 @@ func NewHandler() *Router {
 }
 
 func (h *Router) Get(url string, handler func(ctx *JolContext)) {
-	h.addHandler("GET", url, append(h.middlewares, handler))
+	h.addHandler("GET", url, combineMiddlewareAndHandler(h.middlewares, handler))
 }
 
 func (h *Router) Post(url string, handler func(ctx *JolContext)) {
-	h.addHandler("POST", url, append(h.middlewares, handler))
+	h.addHandler("POST", url, combineMiddlewareAndHandler(h.middlewares, handler))
 }
 
 func (h *Router) Put(url string, handler func(ctx *JolContext)) {
-	h.addHandler("PUT", url, append(h.middlewares, handler))
+	h.addHandler("PUT", url, combineMiddlewareAndHandler(h.middlewares, handler))
 }
 
 func (h *Router) Patch(url string, handler func(ctx *JolContext)) {
-	h.addHandler("PATH", url, append(h.middlewares, handler))
+	h.addHandler("PATH", url, combineMiddlewareAndHandler(h.middlewares, handler))
+}
+
+func combineMiddlewareAndHandler(middlewares []func(ctx *JolContext), handler func(ctx *JolContext)) []func(ctx *JolContext) {
+	arr := make([]func(ctx *JolContext), len(middlewares))
+	copy(arr, middlewares)
+	return append(arr, handler)
 }
 
 func (h *Router) Use(name string, handler func(ctx *JolContext)) {
