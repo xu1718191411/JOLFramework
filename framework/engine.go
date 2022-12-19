@@ -81,7 +81,7 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	s := e.Router.handlers[strings.ToUpper(r.Method)]
-	targetHandler := s.Find(r.RequestURI)
+	targetHandler := s.Find(r.URL.Path)
 	middlerwares := e.Router.middlewares
 
 	handlers := append(middlerwares, targetHandler)
