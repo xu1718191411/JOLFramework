@@ -27,10 +27,6 @@ func main() {
 		ctx.Next()
 	})
 
-	router.Get("/users", func(ctx *framework.JolContext) {
-		ctx.Json("users")
-	})
-
 	router.Get("/panic", func(ctx *framework.JolContext) {
 		ctx.Json("panic")
 	})
@@ -40,7 +36,11 @@ func main() {
 	})
 
 	group.Get("/tickets", func(ctx *framework.JolContext) {
-		ctx.Json("tickets")
+		ctx.Json("tickets, name:" + ctx.QueryStringWithDefault("name", "defaultName"))
+	})
+
+	router.Get("/users", func(ctx *framework.JolContext) {
+		ctx.Json(fmt.Sprintf("users, id: %d", ctx.QueryIntWithDefault("user_id", 0)))
 	})
 
 	engine := framework.Engine{
