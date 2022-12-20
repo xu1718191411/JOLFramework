@@ -30,6 +30,7 @@ func main() {
 	router.Get("/panic", func(ctx *framework.JolContext) {
 		ctx.Json("panic")
 	})
+
 	router.Get("/timeout", func(ctx *framework.JolContext) {
 		time.Sleep(time.Second * 3)
 		ctx.Json("timeout handler")
@@ -45,6 +46,19 @@ func main() {
 
 	router.Get("/users/:user_id/lists/:list_id", func(ctx *framework.JolContext) {
 		ctx.Json("user_id:list_id" + ctx.ParamStringWithDefaultValue(":user_id", "aaa"))
+	})
+
+	type User struct {
+		Mail     string `json:"mail"`
+		Password string `json:"password"`
+	}
+
+	router.Post("/posts", func(ctx *framework.JolContext) {
+		var user User
+		ctx.BindJson(&user)
+		var user2 User
+		ctx.BindJson(&user2)
+		ctx.Json(user)
 	})
 
 	engine := framework.Engine{

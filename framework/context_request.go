@@ -1,6 +1,9 @@
 package framework
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"strconv"
 )
 
@@ -76,4 +79,17 @@ func (ctx *JolContext) ParamStringWithDefaultValue(param string, defaultValue st
 		return defaultValue
 	}
 	return v
+}
+
+func (ctx *JolContext) BindJson(target interface{}) error {
+	data, err := io.ReadAll(ctx.request.Body)
+
+	if err != nil {
+		return err
+	}
+
+	// recovery body after read it
+	ctx.request.Body = io.NopCloser(bytes.NewBuffer(data))
+
+	return json.Unmarshal(data, target)
 }
