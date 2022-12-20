@@ -8,6 +8,7 @@ type Node struct {
 	param    string
 	children []*Node
 	handlers []func(ctx *JolContext)
+	Parent   *Node
 }
 
 func (n *Node) ExistedInChildren(param string) *Node {
@@ -36,7 +37,26 @@ func (n *Node) ExistedInChildren(param string) *Node {
 
 // is param contains :
 func isGeneric(param string) bool {
-	return strings.Contains(param, ":")
+	return strings.HasPrefix(param, ":")
+}
+
+func (n *Node) ParseParams(path string) map[string]string {
+
+	pointer := n
+	dicts := make(map[string]string, 0)
+
+	segments := strings.Split(path, "/")
+
+	for i := len(segments) - 1; i > 0; i-- {
+
+		if isGeneric(pointer.param) {
+			dicts[pointer.param] = segments[i]
+		}
+
+		pointer = pointer.Parent
+	}
+
+	return dicts
 }
 
 func (n *Node) Find(urls []string) *Node {
@@ -92,7 +112,8 @@ func (t *Tree) Add(url string, handlers []func(ctx *JolContext)) *Tree {
 		if findInChildren == nil {
 			// add into child
 			newChild := &Node{
-				param: param,
+				param:  param,
+				Parent: currentNode,
 			}
 
 			// if it is the last node, append handler to the node

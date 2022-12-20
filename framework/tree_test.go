@@ -11,12 +11,16 @@ func TestTreeT(t *testing.T) {
 		Node: nil,
 	}
 
-	tree.Add("/users/:id/tickets", func(ctx *JolContext) {
-		ctx.Json("get users id")
+	tree.Add("/users/:id/tickets", []func(ctx *JolContext){
+		func(ctx *JolContext) {
+			ctx.Json("get users id")
+		},
 	})
 
-	tree.Add("/users/:id/tickets", func(ctx *JolContext) {
-		ctx.Json("get users id")
+	tree.Add("/users/:id/tickets", []func(ctx *JolContext){
+		func(ctx *JolContext) {
+			ctx.Json("get users id")
+		},
 	})
 
 	res := tree.Find("/users/1/lists")
@@ -26,7 +30,7 @@ func TestTreeT(t *testing.T) {
 	}
 	mockResponseWriter := &MockResponseWriter{}
 	ctx := NewContext(mockResponseWriter, &http.Request{})
-	res(ctx)
+	res.handlers[len(res.handlers)-1](ctx)
 }
 
 type MockResponseWriter struct {

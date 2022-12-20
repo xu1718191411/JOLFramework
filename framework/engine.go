@@ -81,12 +81,17 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jolContext := NewContext(w, r)
 
 	s := e.Router.handlers[strings.ToUpper(r.Method)]
-	targetNode := s.Find(r.RequestURI)
+
+	targetNode := s.Find(r.URL.Path)
 
 	if targetNode == nil {
 		jolContext.Status(http.StatusNotFound)
 		return
 	}
+
+	paramsDicts := targetNode.ParseParams(r.URL.Path)
+	jolContext.SetNode(targetNode)
+	jolContext.SetParamsDicts(paramsDicts)
 
 	handlers := targetNode.handlers
 	jolContext.Handlers = handlers
