@@ -43,6 +43,10 @@ func main() {
 		ctx.Json(fmt.Sprintf("users, id: %d", ctx.QueryIntWithDefault("user_id", 0)))
 	})
 
+	router.Get("/users/:user_id/lists/:list_id", func(ctx *framework.JolContext) {
+		ctx.Json("user_id:list_id" + ctx.ParamStringWithDefaultValue(":user_id", "aaa"))
+	})
+
 	engine := framework.Engine{
 		Router: router,
 	}

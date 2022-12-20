@@ -1,6 +1,8 @@
 package framework
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func (ctx *JolContext) QueryAll() map[string][]string {
 	return ctx.request.URL.Query()
@@ -57,4 +59,21 @@ func (ctx *JolContext) QueryInt(key string) (int, bool) {
 		return 0, false
 	}
 	return v, true
+}
+
+func (ctx *JolContext) ParamString(param string) (string, bool) {
+	result := ctx.paramsDicts[param]
+	if result == "" {
+		return "", false
+	}
+
+	return result, true
+}
+
+func (ctx *JolContext) ParamStringWithDefaultValue(param string, defaultValue string) string {
+	v, ok := ctx.ParamString(param)
+	if !ok {
+		return defaultValue
+	}
+	return v
 }

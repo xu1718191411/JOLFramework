@@ -9,12 +9,14 @@ import (
 )
 
 type JolContext struct {
-	writer    http.ResponseWriter
-	request   *http.Request
-	mutax     sync.Mutex
-	isTimeout bool
-	index     int
-	Handlers  []func(ctx *JolContext)
+	writer      http.ResponseWriter
+	request     *http.Request
+	mutax       sync.Mutex
+	isTimeout   bool
+	index       int
+	Handlers    []func(ctx *JolContext)
+	node        *Node
+	paramsDicts map[string]string
 }
 
 func NewContext(writer http.ResponseWriter, request *http.Request) *JolContext {
@@ -96,4 +98,12 @@ func (c *JolContext) Next() {
 		c.index += 1
 		handler(c)
 	}
+}
+
+func (c *JolContext) SetNode(node *Node) {
+	c.node = node
+}
+
+func (c *JolContext) SetParamsDicts(dicts map[string]string) {
+	c.paramsDicts = dicts
 }

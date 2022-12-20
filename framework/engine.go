@@ -89,6 +89,10 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	paramsDicts := targetNode.ParseParams(r.URL.Path)
+	jolContext.SetNode(targetNode)
+	jolContext.SetParamsDicts(paramsDicts)
+
 	handlers := targetNode.handlers
 	jolContext.Handlers = handlers
 
