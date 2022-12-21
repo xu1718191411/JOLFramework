@@ -3,9 +3,11 @@ package main
 import (
 	"JOLFramework/framework"
 	"JOLFramework/framework/middlewares"
+	"context"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 )
 
@@ -13,12 +15,13 @@ func main() {
 	router := framework.NewHandler()
 
 	router.Get("/", func(ctx *framework.JolContext) {
+		time.Sleep(time.Second * 3)
 		ctx.Json("hello")
 	})
 
 	router.Use("recovery", middlewares.Recovery)
 	router.Use("log", middlewares.Logger)
-	router.Use("timeout", middlewares.Timeout(time.Second))
+	router.Use("timeout", middlewares.Timeout(10*time.Second))
 
 	group := framework.NewGroup(router, "/api/v1")
 
@@ -65,6 +68,26 @@ func main() {
 		Router: router,
 	}
 	port := 8080
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), &engine))
-	fmt.Println("listening on port:", port)
+
+	c := make(chan os.Signal)
+	signal.Notify(c)
+
+	server := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: &engine}
+	go func(s *http.Server) {
+		fmt.Println("listening on port:", port)
+		err := s.ListenAndServe()
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+	}(server)
+
+	<-c
+
+	fmt.Println("interrupted")
+
+	if err := server.Shutdown(context.Background()); err != nil {
+		fmt.Println("error at shutdown", err)
+	}
+	fmt.Println("shutdown completely")
+
 }
